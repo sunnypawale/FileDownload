@@ -5,5 +5,5 @@ import java.util.List;
 public interface DownlaoderUtilityBean {
 
 	
-	void initiateDownload(List<String> sourceLocation, String destination);
+	void initiateDownload(List<String> sourceLocation);
 }

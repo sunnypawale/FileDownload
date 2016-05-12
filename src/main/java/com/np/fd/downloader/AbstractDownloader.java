@@ -8,6 +8,7 @@ import java.util.Date;
 import java.util.concurrent.Callable;
 
 import com.np.fd.Utils.FileUtils;
+import com.np.fd.config.ApplicationPropertyConfig;
 import com.np.fd.constant.Constants;
 
 public abstract class AbstractDownloader implements Callable<Void> {
@@ -21,8 +22,12 @@ public abstract class AbstractDownloader implements Callable<Void> {
 	protected int readTimeOut;
 
 	static {
-		saveDir = "D:/Download";
+		saveDir = ApplicationPropertyConfig.getSaveLocation();
 	}
+
+	/*------------------------------------------*/
+	/*---------------  Constructor -------------*/
+	/*------------------------------------------*/
 
 	public AbstractDownloader(String fileUrl) {
 		this.fileUrl = fileUrl;
@@ -30,8 +35,7 @@ public abstract class AbstractDownloader implements Callable<Void> {
 		this.readTimeOut = DEFAULT_READ_TIME_OUT;
 	}
 
-	public AbstractDownloader(String fileUrl, int connectionTimeOut,
-			int readTimeOut) {
+	public AbstractDownloader(String fileUrl, int connectionTimeOut, int readTimeOut) {
 		this.fileUrl = fileUrl;
 		this.connectionTimeOut = connectionTimeOut;
 		this.readTimeOut = readTimeOut;
@@ -43,7 +47,7 @@ public abstract class AbstractDownloader implements Callable<Void> {
 
 	protected abstract void initiateConenction() throws IOException;
 
-	protected abstract void closeConnection() throws IOException;
+	protected abstract void closeConnection();
 
 	/**
 	 * Read the file name from header or Url.
@@ -54,44 +58,40 @@ public abstract class AbstractDownloader implements Callable<Void> {
 	protected String getFileName() throws IOException {
 		String fileName = null;
 		String disposition = getHeaderField(Constants.HeaderConstant.CONTENT_DIPOSITION);
-		if (disposition != null && disposition.contains(Constants.FILE_NAME)) {
+		if (disposition != null && disposition.contains(Constants.HeaderConstant.FILE_NAME)) {
 			// extracts file name from header field
-			int index = disposition.indexOf(Constants.FILE_NAME
-					+ Constants.EQUAL);
+			int index = disposition.indexOf(Constants.HeaderConstant.FILE_NAME);
 			if (index > 0) {
-				fileName = disposition.substring(index + 10,
-						disposition.length() - 1);
+				fileName = disposition.substring(index + Constants.HeaderConstant.FILE_NAME.length(),
+						disposition.length());
 			}
 		} else {
 			// extracts file name from URL
-			fileName = fileUrl.substring(
-					fileUrl.lastIndexOf(Constants.FORWORD_SLASH) + 1,
-					fileUrl.length());
+			fileName = fileUrl.substring(fileUrl.lastIndexOf(Constants.FORWORD_SLASH) + 1, fileUrl.length());
 		}
 		return fileName;
 	}
 
-	public Void call() throws Exception {
+	/* 
+	 */
+	public Void call() {
 
 		try {
 			initiateConenction();
 			String fileName = getFileName();
 			InputStream inputStream = readInputStream();
 
-			long contentLength = Long
-					.valueOf(getHeaderField(Constants.HeaderConstant.CONTENT_LENGTH));
+			long contentLength = Long.valueOf(getHeaderField(Constants.HeaderConstant.CONTENT_LENGTH));
 
 			File destination = getFile(fileName);
 			// opens an output stream to save into file
-			FileOutputStream outputStream = FileUtils
-					.openOutputStream(destination);
+			FileOutputStream outputStream = FileUtils.openOutputStream(destination);
 			long dounloadSize = 0;
 			try {
 
 				byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-				dounloadSize = FileUtils
-						.copy(inputStream, outputStream, buffer);
-				outputStream.close();
+				dounloadSize = FileUtils.copy(inputStream, outputStream, buffer);
+				System.out.println("File downloaded");
 			} catch (IOException ex) {
 
 			} finally {
@@ -101,7 +101,6 @@ public abstract class AbstractDownloader implements Callable<Void> {
 				}
 			}
 			FileUtils.closeInputStream(inputStream);
-			System.out.println("File downloaded");
 		} catch (IOException ex) {
 			System.out.println("Connection Failed");
 		} finally {
@@ -111,14 +110,29 @@ public abstract class AbstractDownloader implements Callable<Void> {
 	}
 
 	private File getFile(String fileName) {
-		String saveFilePath = saveDir + File.separator;
-		File destination = new File(saveFilePath + fileName);
+		String fileLocation = saveDir + File.separator;
+		File destination = new File(fileLocation + fileName);
 
 		if (destination.exists()) {
-			long time = new Date().getTime();
-			fileName.concat(String.valueOf(time));
-			destination = new File(saveFilePath + fileName);
+			destination = createFileWithNewName(fileName, fileLocation);
 		}
 		return destination;
 	}
+
+	private File createFileWithNewName(String fileName, String fileLocation) {
+		File destination;
+		long time = new Date().getTime();
+		StringBuffer fileNameBuffer = new StringBuffer();
+		final int index = FileUtils.indexOfExtension(fileName);
+		if (index == Constants.NOT_FOUND) {
+			fileName = fileNameBuffer.append(fileName).append(String.valueOf(time)).toString();
+		} else {
+			fileName = fileNameBuffer.append(fileName.substring(0, index)).append(String.valueOf(time))
+					.append(Constants.EXTENSION_SEPARATOR).append(fileName.substring(index + 1, fileName.length()))
+					.toString();
+		}
+		destination = new File(fileLocation + fileName);
+		return destination;
+	}
+
 }

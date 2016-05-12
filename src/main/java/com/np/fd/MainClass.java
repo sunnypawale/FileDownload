@@ -1,13 +1,27 @@
 package com.np.fd;
 
-import java.io.File;
+import java.util.Arrays;
+
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+
+import com.np.fd.downloader.DownlaoderUtilityBean;
+import com.np.fd.downloader.impl.DownlaoderUtilityBeanImpl;
 
 public class MainClass {
 
-	 static String saveDir = "D:/Download";
-	 static String saveFilePath = saveDir + File.separator + "asdv";
+	/*"ftp://test.rebex.net",
+	"https://www.tv-subs.com/subtitle/silicon-valley-season-2-episode-10-english-7752.zip",
+	"http://mirror.fibergrid.in/apache//commons/io/source/commons-io-2.5-src.zip",
+	"http://www.tutorialspoint.com/struts_2/pdf/index.pdf"*/
+	private static ApplicationContext applicationContext;
+
 	public static void main(String[] args) {
-		File destination = new File(saveFilePath);
-		System.out.println(destination);
+		applicationContext = new ClassPathXmlApplicationContext("applicationContext.xml");
+		DownlaoderUtilityBean downlaoderUtilityBean = applicationContext.getBean("downlaoderUtilityBean",
+				DownlaoderUtilityBeanImpl.class);
+		downlaoderUtilityBean.initiateDownload(Arrays.asList(
+				"ftps://demo:password@test.rebex.net:21/readme.txt"));
 	}
+
 }

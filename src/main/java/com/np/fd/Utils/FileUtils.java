@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 
+import com.np.fd.constant.Constants;
+
 public class FileUtils {
 	public static final int EOF = -1;
 
@@ -72,4 +74,11 @@ public class FileUtils {
 		}
 	}
 
+	public static int indexOfExtension(final String filename) {
+		if (filename == null) {
+			return Constants.NOT_FOUND;
+		}
+		final int extensionPos = filename.lastIndexOf(Constants.EXTENSION_SEPARATOR);
+		return extensionPos;
+	}
 }

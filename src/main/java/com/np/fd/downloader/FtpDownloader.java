@@ -2,49 +2,40 @@ package com.np.fd.downloader;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 
-public class HttpDownloader extends AbstractDownloader {
+public class FtpDownloader extends AbstractDownloader {
 
-	private HttpURLConnection connection;
-	private int responseCode = 0;
+	private URLConnection connection;
 
-	public HttpDownloader(String fileUrl) {
+	public FtpDownloader(String fileUrl) {
 		super(fileUrl);
 	}
 
-	public HttpDownloader(String fileUrl, int connectionTimeOut, int readTimeOut) {
+	public FtpDownloader(String fileUrl, int connectionTimeOut, int readTimeOut) {
 		super(fileUrl, connectionTimeOut, readTimeOut);
 	}
 
 	public void initiateConenction() throws IOException {
 		if (fileUrl != null && !fileUrl.isEmpty()) {
 			URL url = new URL(fileUrl);
-			connection = (HttpURLConnection) url.openConnection();
+			connection = url.openConnection();
 			connection.setConnectTimeout(connectionTimeOut);
 			connection.setReadTimeout(readTimeOut);
-			responseCode = connection.getResponseCode();
 		}
 	}
 
-	private HttpURLConnection getConnection() throws IOException {
+	private URLConnection getConnection() throws IOException {
 		if (connection == null) {
 			initiateConenction();
 		}
 		return connection;
 	}
 
-	public int getResponseCode() {
-		return responseCode;
-	}
-
 	@Override
 	public InputStream readInputStream() throws IOException {
-		if (responseCode == HttpURLConnection.HTTP_OK) {
-			return getConnection().getInputStream();
-		}
-		return null;
+		return getConnection().getInputStream();
 	}
 
 	@Override
@@ -54,8 +45,5 @@ public class HttpDownloader extends AbstractDownloader {
 
 	@Override
 	protected void closeConnection() {
-		if (connection != null) {
-			connection.disconnect();
-		}
 	}
 }
