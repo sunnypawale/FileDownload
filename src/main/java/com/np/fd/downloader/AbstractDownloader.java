@@ -10,6 +10,8 @@ import java.util.concurrent.Callable;
 import com.np.fd.Utils.FileUtils;
 import com.np.fd.config.ApplicationPropertyConfig;
 import com.np.fd.constant.Constants;
+import com.np.fd.dto.SourceDto;
+import com.np.fd.exception.DownloadException;
 
 public abstract class AbstractDownloader implements Callable<Void> {
 	private static final int DEFAULT_CONNECTION_TIME_OUT = 60000;
@@ -17,7 +19,7 @@ public abstract class AbstractDownloader implements Callable<Void> {
 	private static final int DEFAULT_BUFFER_SIZE = 1024 * 4;
 
 	protected static String saveDir;
-	protected String fileUrl;
+	protected SourceDto source;
 	protected int connectionTimeOut;
 	protected int readTimeOut;
 
@@ -29,25 +31,39 @@ public abstract class AbstractDownloader implements Callable<Void> {
 	/*---------------  Constructor -------------*/
 	/*------------------------------------------*/
 
-	public AbstractDownloader(String fileUrl) {
-		this.fileUrl = fileUrl;
+	public AbstractDownloader(SourceDto source) {
+		this.source = source;
 		this.connectionTimeOut = DEFAULT_CONNECTION_TIME_OUT;
 		this.readTimeOut = DEFAULT_READ_TIME_OUT;
 	}
 
-	public AbstractDownloader(String fileUrl, int connectionTimeOut, int readTimeOut) {
-		this.fileUrl = fileUrl;
+	public AbstractDownloader(SourceDto source, int connectionTimeOut,
+			int readTimeOut) {
+		this.source = source;
 		this.connectionTimeOut = connectionTimeOut;
 		this.readTimeOut = readTimeOut;
 	}
 
-	public abstract InputStream readInputStream() throws IOException;
+	public abstract InputStream readInputStream() throws DownloadException;
 
-	protected abstract String getHeaderField(String name) throws IOException;
+	protected abstract long getContentLength(String name)
+			throws DownloadException;
 
-	protected abstract void initiateConenction() throws IOException;
+	protected abstract String getHeaderField(String name)
+			throws DownloadException;
+
+	protected abstract void initiateConenction() throws DownloadException;
 
 	protected abstract void closeConnection();
+
+	protected abstract boolean validate();
+
+	protected boolean validate(SourceDto source) {
+		if (source.getHost() == null) {
+			return false;
+		}
+		return true;
+	}
 
 	/**
 	 * Read the file name from header or Url.
@@ -55,19 +71,21 @@ public abstract class AbstractDownloader implements Callable<Void> {
 	 * @return String File Name
 	 * @throws IOException
 	 */
-	protected String getFileName() throws IOException {
+	protected String getFileName() throws DownloadException {
 		String fileName = null;
 		String disposition = getHeaderField(Constants.HeaderConstant.CONTENT_DIPOSITION);
-		if (disposition != null && disposition.contains(Constants.HeaderConstant.FILE_NAME)) {
+		if (disposition != null
+				&& disposition.contains(Constants.HeaderConstant.FILE_NAME)) {
 			// extracts file name from header field
 			int index = disposition.indexOf(Constants.HeaderConstant.FILE_NAME);
 			if (index > 0) {
-				fileName = disposition.substring(index + Constants.HeaderConstant.FILE_NAME.length(),
+				fileName = disposition.substring(index
+						+ Constants.HeaderConstant.FILE_NAME.length(),
 						disposition.length());
 			}
 		} else {
 			// extracts file name from URL
-			fileName = fileUrl.substring(fileUrl.lastIndexOf(Constants.FORWORD_SLASH) + 1, fileUrl.length());
+			fileName = source.getFileNameFromPath();
 		}
 		return fileName;
 	}
@@ -77,32 +95,45 @@ public abstract class AbstractDownloader implements Callable<Void> {
 	public Void call() {
 
 		try {
-			initiateConenction();
-			String fileName = getFileName();
-			InputStream inputStream = readInputStream();
 
-			long contentLength = Long.valueOf(getHeaderField(Constants.HeaderConstant.CONTENT_LENGTH));
+			if (validate()) {
 
-			File destination = getFile(fileName);
-			// opens an output stream to save into file
-			FileOutputStream outputStream = FileUtils.openOutputStream(destination);
-			long dounloadSize = 0;
-			try {
+				initiateConenction();
+				String fileName = getFileName();
+				InputStream inputStream = readInputStream();
 
-				byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
-				dounloadSize = FileUtils.copy(inputStream, outputStream, buffer);
-				System.out.println("File downloaded");
-			} catch (IOException ex) {
+				long contentLength = getContentLength(fileName);
+				System.out.println("contentLength==========" + contentLength);
+				File destination = getFile(fileName);
+				// opens an output stream to save into file
+				FileOutputStream outputStream = null;
+				long dounloadSize = 0;
+				try {
+					outputStream = FileUtils.openOutputStream(destination);
 
-			} finally {
-				FileUtils.closeOutputStream(outputStream);
-				if (dounloadSize < contentLength) {
-					FileUtils.forceDelete(destination);
+					byte[] buffer = new byte[DEFAULT_BUFFER_SIZE];
+					dounloadSize = FileUtils.copy(inputStream, outputStream,
+							buffer);
+					System.out
+							.println("File downloaded Successfully! location :"
+									+ destination);
+				} catch (IOException ex) {
+					System.err
+							.println("File downloaded Failed for fileName: "
+									+ fileName + destination + " :: "
+									+ ex.getMessage());
+				} finally {
+					FileUtils.closeOutputStream(outputStream);
+					FileUtils.closeInputStream(inputStream);
+					if (dounloadSize < contentLength) {
+						FileUtils.forceDelete(destination);
+					}
 				}
+			} else {
+				System.out.println("Invalid  Details");
 			}
-			FileUtils.closeInputStream(inputStream);
-		} catch (IOException ex) {
-			System.out.println("Connection Failed");
+		} catch (DownloadException ex) {
+			System.err.println("Connection Failed :: " + ex.getMessage());
 		} finally {
 			closeConnection();
 		}
@@ -125,10 +156,13 @@ public abstract class AbstractDownloader implements Callable<Void> {
 		StringBuffer fileNameBuffer = new StringBuffer();
 		final int index = FileUtils.indexOfExtension(fileName);
 		if (index == Constants.NOT_FOUND) {
-			fileName = fileNameBuffer.append(fileName).append(String.valueOf(time)).toString();
+			fileName = fileNameBuffer.append(fileName)
+					.append(String.valueOf(time)).toString();
 		} else {
-			fileName = fileNameBuffer.append(fileName.substring(0, index)).append(String.valueOf(time))
-					.append(Constants.EXTENSION_SEPARATOR).append(fileName.substring(index + 1, fileName.length()))
+			fileName = fileNameBuffer.append(fileName.substring(0, index))
+					.append(String.valueOf(time))
+					.append(Constants.EXTENSION_SEPARATOR)
+					.append(fileName.substring(index + 1, fileName.length()))
 					.toString();
 		}
 		destination = new File(fileLocation + fileName);

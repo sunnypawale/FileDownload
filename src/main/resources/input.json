@@ -1,0 +1,10 @@
+[
+
+  
+   {
+      "host":"ftp://demo.wftpserver.com",
+      "path":"/download/test.java",
+      "userName":"demo-user",
+      "password":"demo-user"
+   }
+]

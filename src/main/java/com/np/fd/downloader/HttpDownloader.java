@@ -5,30 +5,39 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import com.np.fd.constant.Constants;
+import com.np.fd.dto.SourceDto;
+import com.np.fd.exception.DownloadException;
+
 public class HttpDownloader extends AbstractDownloader {
 
 	private HttpURLConnection connection;
 	private int responseCode = 0;
 
-	public HttpDownloader(String fileUrl) {
-		super(fileUrl);
+	public HttpDownloader(SourceDto source) {
+		super(source);
 	}
 
-	public HttpDownloader(String fileUrl, int connectionTimeOut, int readTimeOut) {
-		super(fileUrl, connectionTimeOut, readTimeOut);
+	public HttpDownloader(SourceDto source, int connectionTimeOut,
+			int readTimeOut) {
+		super(source, connectionTimeOut, readTimeOut);
 	}
 
-	public void initiateConenction() throws IOException {
-		if (fileUrl != null && !fileUrl.isEmpty()) {
-			URL url = new URL(fileUrl);
-			connection = (HttpURLConnection) url.openConnection();
-			connection.setConnectTimeout(connectionTimeOut);
-			connection.setReadTimeout(readTimeOut);
-			responseCode = connection.getResponseCode();
+	public void initiateConenction() throws DownloadException {
+		try {
+			if (source.getHost() != null && !source.getHost().isEmpty()) {
+				URL url = new URL(prepareURL());
+				connection = (HttpURLConnection) url.openConnection();
+				connection.setConnectTimeout(connectionTimeOut);
+				connection.setReadTimeout(readTimeOut);
+				responseCode = connection.getResponseCode();
+			}
+		} catch (IOException ex) {
+			throw new DownloadException(ex);
 		}
 	}
 
-	private HttpURLConnection getConnection() throws IOException {
+	private HttpURLConnection getConnection() throws DownloadException {
 		if (connection == null) {
 			initiateConenction();
 		}
@@ -40,15 +49,24 @@ public class HttpDownloader extends AbstractDownloader {
 	}
 
 	@Override
-	public InputStream readInputStream() throws IOException {
-		if (responseCode == HttpURLConnection.HTTP_OK) {
-			return getConnection().getInputStream();
+	public InputStream readInputStream() throws DownloadException {
+		try {
+			if (responseCode == HttpURLConnection.HTTP_OK) {
+				return getConnection().getInputStream();
+			}
+		} catch (IOException ex) {
+			throw new DownloadException(ex);
 		}
 		return null;
 	}
 
 	@Override
-	protected String getHeaderField(String name) throws IOException {
+	protected long getContentLength(String name) throws DownloadException {
+		return getConnection().getContentLengthLong();
+	}
+
+	@Override
+	protected String getHeaderField(String name) throws DownloadException {
 		return getConnection().getHeaderField(name);
 	}
 
@@ -58,4 +76,23 @@ public class HttpDownloader extends AbstractDownloader {
 			connection.disconnect();
 		}
 	}
+
+	@Override
+	protected boolean validate() {
+		return validate(source);
+	}
+
+	public String prepareURL() {
+		String host = source.getHost();
+		StringBuilder url = new StringBuilder(host);
+		if ('/' == source.getPath().charAt(0)) {
+			url.append(source.getPath());
+		} else {
+			url.append(Constants.FORWORD_SLASH);
+			url.append(source.getPath());
+		}
+		System.out.println(url.toString());
+		return url.toString();
+	}
+
 }

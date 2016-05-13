@@ -12,7 +12,7 @@ import com.np.fd.constant.Constants;
 public class FileUtils {
 	public static final int EOF = -1;
 
-	public static void forceDelete(final File file) throws IOException {
+	public static void forceDelete(final File file){
 		try {
 			Files.delete(file.toPath());
 		} catch (IOException ex) {
@@ -24,27 +24,30 @@ public class FileUtils {
 			throws IOException {
 		if (file.exists()) {
 			if (file.isDirectory()) {
-				throw new IOException("File '" + file
-						+ "' exists but is a directory");
+				String msg = "Unexpected File '" + file
+						+ "' exists but is a directory";
+				throw new IOException(msg);
 			}
 			if (file.canWrite() == false) {
-				throw new IOException("File '" + file
-						+ "' cannot be written to");
+				String msg = "Unexpected File '" + file
+						+ "' cannot be written to";
+				throw new IOException(msg);
 			}
 		} else {
 			final File parent = file.getParentFile();
 			if (parent != null) {
 				if (!parent.mkdirs() && !parent.isDirectory()) {
-					throw new IOException("Directory '" + parent
-							+ "' could not be created");
+					String msg = "Unexpected Directory '" + parent
+							+ "' could not be created";
+					throw new IOException(msg);
 				}
 			}
 		}
 		return new FileOutputStream(file);
 	}
 
-	public static long copy(final InputStream input,
-			final OutputStream output, final byte[] buffer) throws IOException {
+	public static long copy(final InputStream input, final OutputStream output,
+			final byte[] buffer) throws IOException {
 		long count = 0;
 		int n;
 		while (EOF != (n = input.read(buffer))) {
@@ -78,7 +81,8 @@ public class FileUtils {
 		if (filename == null) {
 			return Constants.NOT_FOUND;
 		}
-		final int extensionPos = filename.lastIndexOf(Constants.EXTENSION_SEPARATOR);
+		final int extensionPos = filename
+				.lastIndexOf(Constants.EXTENSION_SEPARATOR);
 		return extensionPos;
 	}
 }

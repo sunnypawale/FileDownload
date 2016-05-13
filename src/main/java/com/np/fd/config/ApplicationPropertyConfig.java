@@ -22,7 +22,7 @@ public class ApplicationPropertyConfig {
 
 			input = getClass().getClassLoader().getResourceAsStream(PROPERTY_FILE_NAME);
 			if (input == null) {
-				System.out.println("Sorry, unable to find " + PROPERTY_FILE_NAME);
+				System.err.println("Sorry, unable to find " + PROPERTY_FILE_NAME);
 				return;
 			}
 
