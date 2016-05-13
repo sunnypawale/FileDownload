@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-import com.np.fd.Utils.FileUtils;
+import com.np.fd.utils.FileUtils;
 import com.np.fd.constant.Constants;
 
 public class ApplicationPropertyConfig {

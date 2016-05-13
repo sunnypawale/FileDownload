@@ -9,20 +9,54 @@ import com.np.fd.constant.Constants;
 import com.np.fd.dto.SourceDto;
 import com.np.fd.exception.DownloadException;
 
+/**
+ * HTTP/HTTPS file Downloader concrete implementation of
+ * {@link AbstractDownloader}
+ */
 public class HttpDownloader extends AbstractDownloader {
 
 	private HttpURLConnection connection;
 	private int responseCode = 0;
 
+	/*------------------------------------------*/
+	/*---------------  Constructor -------------*/
+	/*------------------------------------------*/
+
 	public HttpDownloader(SourceDto source) {
 		super(source);
 	}
 
-	public HttpDownloader(SourceDto source, int connectionTimeOut,
-			int readTimeOut) {
+	public HttpDownloader(SourceDto source, int connectionTimeOut, int readTimeOut) {
 		super(source, connectionTimeOut, readTimeOut);
 	}
 
+	/*------------------------------------------*/
+	/*---------------  private methods ---------*/
+	/*------------------------------------------*/
+
+	private HttpURLConnection getConnection() throws DownloadException {
+		if (connection == null) {
+			initiateConenction();
+		}
+		return connection;
+	}
+
+	private String prepareURL() {
+		String host = source.getHost();
+		StringBuilder url = new StringBuilder(host);
+		if ('/' == source.getPath().charAt(0)) {
+			url.append(source.getPath());
+		} else {
+			url.append(Constants.FORWORD_SLASH);
+			url.append(source.getPath());
+		}
+		return url.toString();
+	}
+
+	/*------------------------------------------*/
+	/*---------------  implementation ----------*/
+	/*------------------------------------------*/
+	@Override
 	public void initiateConenction() throws DownloadException {
 		try {
 			if (source.getHost() != null && !source.getHost().isEmpty()) {
@@ -35,17 +69,6 @@ public class HttpDownloader extends AbstractDownloader {
 		} catch (IOException ex) {
 			throw new DownloadException(ex);
 		}
-	}
-
-	private HttpURLConnection getConnection() throws DownloadException {
-		if (connection == null) {
-			initiateConenction();
-		}
-		return connection;
-	}
-
-	public int getResponseCode() {
-		return responseCode;
 	}
 
 	@Override
@@ -79,20 +102,7 @@ public class HttpDownloader extends AbstractDownloader {
 
 	@Override
 	protected boolean validate() {
-		return validate(source);
-	}
-
-	public String prepareURL() {
-		String host = source.getHost();
-		StringBuilder url = new StringBuilder(host);
-		if ('/' == source.getPath().charAt(0)) {
-			url.append(source.getPath());
-		} else {
-			url.append(Constants.FORWORD_SLASH);
-			url.append(source.getPath());
-		}
-		System.out.println(url.toString());
-		return url.toString();
+		return validateHost(source);
 	}
 
 }

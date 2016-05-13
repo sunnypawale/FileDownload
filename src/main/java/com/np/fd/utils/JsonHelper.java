@@ -1,4 +1,4 @@
-package com.np.fd.Utils;
+package com.np.fd.utils;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -22,7 +22,6 @@ public class JsonHelper {
 
 	private static ObjectMapper mapper = new ObjectMapper();
 
-
 	/*-------------------------*/
 	/*---  Helper Methods!  ---*/
 	/*-------------------------*/
@@ -30,8 +29,7 @@ public class JsonHelper {
 	/**
 	 * Convert a JSON request object to POJO.
 	 */
-	public static <T> T jsonToPojo(JSONObject json, Class<T> type)
-			throws DataValidationException {
+	public static <T> T jsonToPojo(JSONObject json, Class<T> type) throws DataValidationException {
 
 		if (json == null) {
 			String msg = "Can't convert NULL to type '" + type + "'";
@@ -42,15 +40,16 @@ public class JsonHelper {
 			T result = mapper.readValue(json.toString(), type);
 			return result;
 		} catch (IOException e) {
-			String msg = "Unexpected " + e.getClass().getSimpleName()
-					+ " converting JSON object (" + json + ") to type " + type
-					+ ": " + e.getMessage();
+			String msg = "Unexpected " + e.getClass().getSimpleName() + " converting JSON object (" + json
+					+ ") to type " + type + ": " + e.getMessage();
 			throw new DataValidationException(msg);
 		}
 	}
-	
-	public static <T> List<T> jsonToPojoAsList(JSONArray jsonArr, Class<T> type)
-			throws DataValidationException {
+
+	/**
+	 * Convert a JSON request object to List of POJO.
+	 */
+	public static <T> List<T> jsonToPojoAsList(JSONArray jsonArr, Class<T> type) throws DataValidationException {
 
 		if (jsonArr == null) {
 			String msg = "Can't convert NULL to type '" + type + "'";
@@ -58,12 +57,12 @@ public class JsonHelper {
 		}
 		try {
 			mapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
-			List<T> result = mapper.readValue(jsonArr.toString(), mapper.getTypeFactory().constructCollectionType(List.class, type));
+			List<T> result = mapper.readValue(jsonArr.toString(),
+					mapper.getTypeFactory().constructCollectionType(List.class, type));
 			return result;
 		} catch (IOException e) {
-			String msg = "Unexpected " + e.getClass().getSimpleName()
-					+ " converting JSON object (" + jsonArr + ") to type " + type
-					+ ": " + e.getMessage();
+			String msg = "Unexpected " + e.getClass().getSimpleName() + " converting JSON object (" + jsonArr
+					+ ") to type " + type + ": " + e.getMessage();
 			throw new DataValidationException(msg);
 		}
 	}
@@ -80,9 +79,8 @@ public class JsonHelper {
 			mapper.writeValue(stringWriter, obj);
 			return new JSONObject(stringWriter.toString());
 		} catch (IOException | JSONException e) {
-			String msg = "Unexpected " + e.getClass().getSimpleName()
-					+ " converting object (" + obj + ") to type JSONObject: "
-					+ e.getMessage();
+			String msg = "Unexpected " + e.getClass().getSimpleName() + " converting object (" + obj
+					+ ") to type JSONObject: " + e.getMessage();
 			throw new DataValidationException(msg);
 		}
 	}

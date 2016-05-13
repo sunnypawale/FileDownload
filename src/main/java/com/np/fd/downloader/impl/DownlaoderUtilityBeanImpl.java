@@ -13,8 +13,7 @@ import com.np.fd.dto.SourceDto;
 
 public class DownlaoderUtilityBeanImpl implements DownlaoderUtilityBean {
 
-	private static final ExecutorService downloadExecutorThreadPool = Executors
-			.newCachedThreadPool();
+	private static final ExecutorService downloadExecutorThreadPool = Executors.newCachedThreadPool();
 
 	public void initiateDownload(List<SourceDto> sourceLocations) {
 
@@ -25,17 +24,16 @@ public class DownlaoderUtilityBeanImpl implements DownlaoderUtilityBean {
 				switch (protocol) {
 				case HTTP:
 				case HTTPS:
-					downloadExecutorThreadPool
-							.submit(new HttpDownloader(source));
+					downloadExecutorThreadPool.submit(new HttpDownloader(source));
 					break;
-				case FTPS:
 				case FTP:
-					downloadExecutorThreadPool
-							.submit(new FtpDownloader(source));
+					downloadExecutorThreadPool.submit(new FtpDownloader(source));
 					break;
 				case SFTP:
-					downloadExecutorThreadPool
-							.submit(new SftpDownloader(source));
+					downloadExecutorThreadPool.submit(new SftpDownloader(source));
+					break;
+				default:
+					System.out.println("Downloader not available for " + protocol);
 					break;
 				}
 

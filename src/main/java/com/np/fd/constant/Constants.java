@@ -1,7 +1,7 @@
 package com.np.fd.constant;
 
 public interface Constants {
-	
+
 	String EQUAL = "=";
 	String FORWORD_SLASH = "/";
 	char COLON = ':';

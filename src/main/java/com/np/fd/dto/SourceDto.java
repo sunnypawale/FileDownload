@@ -70,9 +70,7 @@ public class SourceDto {
 			if (index == -1) {
 				return null;
 			}
-
-			hostWithOutProtocol = this.host.substring(index + 2,
-					this.host.length());
+			hostWithOutProtocol = this.host.substring(index + 2, this.host.length());
 		}
 		return hostWithOutProtocol;
 	}
@@ -84,7 +82,6 @@ public class SourceDto {
 			if (index == -1) {
 				return null;
 			}
-
 			protocol = this.host.substring(0, index);
 			return Protocols.valueOf(protocol.toUpperCase());
 		}
@@ -92,8 +89,7 @@ public class SourceDto {
 	}
 
 	public String getFileNameFromPath() {
-		String fileName = path.substring(
-				path.lastIndexOf(Constants.FORWORD_SLASH) + 1, path.length());
+		String fileName = path.substring(path.lastIndexOf(Constants.FORWORD_SLASH) + 1, path.length());
 		return fileName;
 	}
 
